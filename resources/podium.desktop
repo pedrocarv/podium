@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Podium
+GenericName=Presentation
+Comment=Create, edit and present PowerPoint presentations
+Exec=podium %f
+Icon=podium
+Terminal=false
+Categories=Office;Presentation;Qt;
+MimeType=application/vnd.openxmlformats-officedocument.presentationml.presentation;
+Keywords=slides;powerpoint;pptx;presentation;slideshow;
