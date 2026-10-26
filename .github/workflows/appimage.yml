@@ -1,0 +1,91 @@
+name: AppImage
+
+# Builds and tests Podium on the oldest supported Ubuntu, packages it as an AppImage and, for
+# version tags, attaches it to the matching GitHub release.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    runs-on: ubuntu-22.04
+    env:
+      CXX: g++-12
+      CC: gcc-12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-12 ninja-build libpugixml-dev zlib1g-dev \
+            libgl1-mesa-dev libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libpulse0 fonts-dejavu-core
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          modules: "qtmultimedia qtimageformats"
+          cache: true
+
+      - name: Build libzip
+        run: |
+          curl -sSL https://github.com/nih-at/libzip/releases/download/v1.11.4/libzip-1.11.4.tar.gz | tar xz
+          cmake -S libzip-1.11.4 -B libzip-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DENABLE_COMMONCRYPTO=OFF -DENABLE_GNUTLS=OFF -DENABLE_MBEDTLS=OFF -DENABLE_OPENSSL=OFF -DENABLE_WINDOWS_CRYPTO=OFF \
+            -DENABLE_BZIP2=OFF -DENABLE_LZMA=OFF -DENABLE_ZSTD=OFF \
+            -DBUILD_TOOLS=OFF -DBUILD_REGRESS=OFF -DBUILD_OSSFUZZ=OFF -DBUILD_EXAMPLES=OFF -DBUILD_DOC=OFF
+          cmake --build libzip-build
+          sudo cmake --install libzip-build
+          sudo ldconfig
+
+      - name: Build
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+          EXTRA_PLATFORM_PLUGINS: libqwayland-egl.so;libqwayland-generic.so
+          LDAI_OUTPUT: Podium-x86_64.AppImage
+        run: |
+          DESTDIR=AppDir cmake --install build
+          base=https://github.com/linuxdeploy
+          curl -sSLO $base/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          curl -sSLO $base/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+          export QMAKE="$(command -v qmake6 || command -v qmake)"
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage \
+            --desktop-file AppDir/usr/share/applications/podium.desktop \
+            --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/podium.svg
+
+      - name: Smoke test the AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          ./Podium-x86_64.AppImage --version
+          ./Podium-x86_64.AppImage --export-pdf demo.pdf examples/demo.pptx
+          test -s demo.pdf
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Podium-x86_64.AppImage
+          path: Podium-x86_64.AppImage
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" Podium-x86_64.AppImage --clobber

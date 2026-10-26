@@ -1,72 +1,146 @@
-# Podium
+<p align="center">
+  <img src="resources/podium.svg" width="128" alt="Podium">
+</p>
 
-A fast, native presentation editor for Linux that uses PowerPoint's `.pptx` as its file format.
-C++20 + Qt 6, about 8k lines.
+<h1 align="center">Podium</h1>
 
-- **Edit**: text boxes with rich text (fonts, sizes, bold/italic/underline, colors, alignment,
-  bullets, numbering, list levels), ~30 preset shapes, lines and arrows, images (insert, paste,
-  drag-and-drop), tables, grouping, z-order, snapping guides, undo/redo, speaker notes.
-- **Slides**: new slide from the deck's layouts, duplicate, delete, hide, drag to reorder,
-  backgrounds, transitions (fade, push, wipe, cover, cut), entrance builds (appear, fade, dissolve;
-  on click / with previous / after previous, by paragraph).
-- **Present**: full-screen slideshow with transitions, builds and embedded video; presenter view
-  with notes, next slide and timer on your laptop while the slides go to the second screen
-  (`Alt+F5` rehearses it on one screen).
-- **Share**: export to PDF (vector text, one page per slide).
+<p align="center">
+  <b>Make and present slides on Linux — in real PowerPoint files.</b><br>
+  Open a <code>.pptx</code>, edit it, present it, send it back. Fast, native and free.
+</p>
 
-## Compatibility
+<p align="center">
+  <a href="https://github.com/pedrocarv/podium/releases/latest"><img src="https://img.shields.io/github/v/release/pedrocarv/podium?label=download&color=5B5FE8" alt="Download"></a>
+  <img src="https://img.shields.io/badge/platform-Linux-FF8A3D" alt="Linux">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-14162B" alt="MIT license"></a>
+</p>
 
-Podium opens and saves `.pptx` directly. Everything Podium edits is written as standard
-PresentationML; everything it doesn't (charts, SmartArt, other animations, effects, embedded fonts,
-custom XML, …) is carried through untouched: unchanged parts of the package are copied byte for
-byte, and each object keeps its original XML with only the edited properties rewritten. Saved files
-validate against the ECMA-376 schemas.
+<p align="center">
+  <img src="docs/editor.png" alt="Podium editing a presentation">
+</p>
 
-Known limits: masters and layouts can't be edited; colors are saved as RGB rather than theme
-references; EMF/WMF pictures show as placeholders. Text renders with the fonts installed on your
-system (`fc-match` decides substitutes, e.g. Calibri → Carlito, Aptos → Liberation Sans), so line
-breaks can differ from PowerPoint when a deck's fonts are missing.
+## Why Podium
 
-## Build
+- **Your files stay PowerPoint files.** No importing, converting or "save as" dance. Podium
+  opens `.pptx` and saves `.pptx`, so the people you send it to just open it.
+- **It doesn't break what it doesn't touch.** Charts, SmartArt, animations and effects that
+  Podium can't edit yet are kept exactly as they were and saved back untouched.
+- **It's fast.** A 37-slide, 300 MB deck full of images and video opens in a blink and saves in
+  under a second.
+- **It's built for presenting.** Presenter view with your notes, the next slide and a timer on
+  your laptop while the projector shows the slides.
+- **It's yours.** No account, no cloud, no internet connection, no subscription.
 
-Dependencies: Qt 6.5+ (Widgets, Svg, Concurrent, Multimedia), libzip ≥ 1.10, pugixml, CMake.
+## What you can do
+
+**Create**
+- Write with any installed font, sizes, colors, bold, italic and underline, alignment,
+  bullets, numbering and list levels
+- Add 30+ shapes, lines and arrows, images (drag and drop or paste) and tables
+- Line things up with snapping guides; group, layer, rotate and resize
+- Start new slides from your template's layouts; set backgrounds; hide and reorder slides
+- Keep speaker notes under every slide
+- Undo everything
+
+**Present**
+- Full-screen slideshow with transitions (fade, push, wipe, cover)
+- Builds: bullets appear one at a time, objects fade in on click or one after another
+- Videos embedded in your slides play right in the show
+- Presenter view on your own screen with notes, next slide, slide counter and timer
+- Rehearse with presenter view on a single screen (`Alt+F5`)
+- Black or white out the screen (`B` / `W`), jump to any slide by typing its number
+
+**Share**
+- Save as `.pptx` for PowerPoint, Google Slides, Keynote or LibreOffice
+- Export to PDF with real, selectable text
+
+<p align="center">
+  <img src="docs/slideshow.png" width="49%" alt="Slideshow">
+  <img src="docs/presenter.png" width="49%" alt="Presenter view">
+</p>
+
+## Install
+
+### AppImage (any distribution)
+
+1. Download **`Podium-x86_64.AppImage`** from the
+   [latest release](https://github.com/pedrocarv/podium/releases/latest).
+2. Make it executable: `chmod +x Podium-x86_64.AppImage`
+3. Double-click it, or run `./Podium-x86_64.AppImage`.
+
+Works on 64-bit Ubuntu 22.04 and newer, Fedora, Debian 12, Arch and most other current
+distributions. To add it to your app menu, use [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever)
+or AppImageLauncher.
+
+### Build it yourself
+
+On Arch (Omarchy, EndeavourOS, …):
 
 ```sh
+sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-svg qt6-multimedia libzip pugixml
+git clone https://github.com/pedrocarv/podium && cd podium
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build                         # model, pptx round-trip and UI tests (offscreen)
-cmake --install build --prefix ~/.local         # binary, desktop entry, icon
+cmake --install build --prefix ~/.local   # adds Podium to your app menu
 ```
 
-## Use
+Other distributions need the same pieces: Qt 6.5+ (base, SVG, Multimedia), libzip 1.10+,
+pugixml and CMake.
+
+## Try it
+
+Open [`examples/demo.pptx`](examples/demo.pptx), press `F5` and click through: the bullets
+build, the chart grows bar by bar, and the slides push and fade. Press `Alt+F5` to see the
+presenter view.
+
+## Keyboard shortcuts
+
+| | |
+|---|---|
+| Start the show | `F5` from the beginning, `Shift+F5` from the current slide, `Alt+F5` presenter view |
+| During the show | `→` `Space` or click: next · `←`: back · number + `Enter`: jump · `B`/`W`: black/white screen · `Esc`: end |
+| New slide | `Ctrl+M` |
+| Edit text | double-click or `Enter` · `Esc` when done · `Tab`/`Shift+Tab` change list level or move between table cells |
+| Format | `Ctrl+B` `Ctrl+I` `Ctrl+U` · `Ctrl+]`/`Ctrl+[` bigger/smaller · `Ctrl+L` `Ctrl+E` `Ctrl+R` `Ctrl+J` align |
+| Arrange | arrows nudge (`Shift` for bigger steps) · `Ctrl+D` duplicate · `Ctrl+G`/`Ctrl+Shift+G` group/ungroup |
+| While dragging | `Shift` keeps the direction, proportions or 15° angles · `Alt` turns off snapping |
+| Zoom | `Ctrl` + scroll · `Ctrl+0` fit the slide |
+
+## Questions
+
+**Will my presentation look the same in PowerPoint?**
+Yes for everything Podium edits: it writes standard Office Open XML (checked against the
+official ECMA-376 schemas). Text uses the fonts installed on your computer, so if a deck uses a
+font you don't have (like Aptos or Calibri), Podium shows a similar one and line breaks can
+differ slightly. Install the font to match exactly.
+
+**Can it open old `.ppt` files or Keynote/Google Slides decks?**
+Not directly. Save them as `.pptx` from PowerPoint, Keynote, Google Slides or LibreOffice first.
+
+**What's not there yet?**
+Editing slide masters and layouts, editing charts and SmartArt (they're kept intact), exit and
+emphasis animations (kept in the file, not played), audio playback, and EMF/WMF images (kept
+in the file, shown as placeholders).
+
+**Is it free?**
+Yes. Podium is open source under the [MIT license](LICENSE).
+
+## From the command line
 
 ```sh
-podium deck.pptx                    # edit
-podium --show --start 3 deck.pptx   # present from slide 3
-podium --export-pdf out.pdf deck.pptx
-podium --export-png dir/ --width 1920 deck.pptx
+podium deck.pptx                          # open
+podium --show --start 3 deck.pptx         # present from slide 3
+podium --export-pdf deck.pdf deck.pptx    # export a PDF
+podium --export-png slides/ deck.pptx     # export every slide as an image
 ```
 
-| | |
-|---|---|
-| Slideshow | `F5` from start, `Shift+F5` from current, `Alt+F5` presenter view |
-| In the show | `→`/`Space`/click next, `←` back, number + `Enter` jump, `B`/`W` black/white, `Esc` end |
-| Editing | double-click or `Enter` edits text, `Tab`/`Shift+Tab` list level or next cell, `Esc` stops |
-| Objects | arrows nudge (`Shift` ×10), `Ctrl+G`/`Ctrl+Shift+G` group/ungroup, `Ctrl+D` duplicate |
-| Moving | `Shift` keeps the axis / aspect ratio / 15° steps, `Alt` disables snapping |
+## Contributing
 
-## Layout
+Bug reports with a sample `.pptx` are the most helpful thing you can send. To work on the
+code: `ctest --test-dir build` runs the test suite (file round trips, the editor driven by
+simulated mouse and keyboard, the slideshow); the README's build steps above get you a dev
+build. Podium is C++20 and Qt 6; `src/model.h` is a good place to start reading.
 
-| | |
-|---|---|
-| `src/model.h` | the document model: plain values, cheap to copy (undo is a snapshot) |
-| `src/pptx_read.cpp`, `src/pptx_write.cpp` | `.pptx` import (resolves theme → master → layout → slide) and export |
-| `src/package.cpp` | OPC zip container (lazy reads, raw copies on save) |
-| `src/render.cpp`, `src/richtext.cpp`, `src/geometry.cpp` | the one renderer used by the editor, thumbnails, show and PDF |
-| `src/canvas.cpp`, `src/mainwindow.cpp`, `src/inspector.cpp`, `src/slidepanel.cpp` | the editor |
-| `src/show.cpp` | slideshow, presenter view, builds and transitions |
+## License
 
-Test helpers: `PODIUM_SAMPLE=deck.pptx` adds a real deck to the round-trip tests;
-`PODIUM_SNAPSHOTS=dir` saves screenshots from the UI tests;
-`tests/validate_schema.py <xsd-dir> file.pptx` checks saved files against the ECMA-376 Part 4
-transitional schemas.
+[MIT](LICENSE) © 2026 Pedro Silva
