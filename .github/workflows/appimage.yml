@@ -18,7 +18,7 @@ jobs:
       CXX: g++-12
       CC: gcc-12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install build dependencies
         run: |
@@ -57,7 +57,7 @@ jobs:
       - name: Package
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
-          EXTRA_PLATFORM_PLUGINS: libqwayland-egl.so;libqwayland-generic.so
+          EXTRA_PLATFORM_PLUGINS: libqwayland-egl.so;libqwayland-generic.so;libqoffscreen.so
           LDAI_OUTPUT: Podium-x86_64.AppImage
         run: |
           DESTDIR=AppDir cmake --install build
@@ -73,13 +73,14 @@ jobs:
       - name: Smoke test the AppImage
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
-          QT_QPA_PLATFORM: offscreen
+        # Without the Qt installer's environment, as on a user's machine.
         run: |
-          ./Podium-x86_64.AppImage --version
-          ./Podium-x86_64.AppImage --export-pdf demo.pdf examples/demo.pptx
+          clean="env -u QT_PLUGIN_PATH -u QML2_IMPORT_PATH -u LD_LIBRARY_PATH -u QT_QPA_PLATFORM"
+          $clean ./Podium-x86_64.AppImage --version
+          $clean ./Podium-x86_64.AppImage --export-pdf demo.pdf examples/demo.pptx
           test -s demo.pdf
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Podium-x86_64.AppImage
           path: Podium-x86_64.AppImage

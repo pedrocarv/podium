@@ -8,8 +8,20 @@
 #include <QElapsedTimer>
 
 #include <cstdio>
+#include <string_view>
 
 namespace {
+
+// Exports, --help and --version need no display, so they also work over SSH or in CI.
+bool headless(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i) {
+        std::string_view arg = argv[i];
+        for (std::string_view flag : {"--export-pdf", "--export-png", "--save-as", "--help", "-h", "--version", "-v"})
+            if (arg == flag || (arg.starts_with(flag) && arg.size() > flag.size() && arg[flag.size()] == '=')) return true;
+    }
+    return false;
+}
 
 int fail(const QString &message)
 {
@@ -44,6 +56,10 @@ int exportDeck(const QCommandLineParser &cli, const QString &file)
 
 int main(int argc, char **argv)
 {
+    if (headless(argc, argv)) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+        qunsetenv("QT_QPA_PLATFORMTHEME"); // desktop themes (e.g. gtk3) want a display
+    }
     QApplication app(argc, argv);
     app.setApplicationName("Podium");
     app.setOrganizationName("Podium");
